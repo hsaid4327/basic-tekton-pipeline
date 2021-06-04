@@ -1,0 +1,9 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: app-web-image
+spec:
+  type: image
+  params:
+    - name: url
+      value: quay.io/hsaid4326/app-web #configure: replace with where the image should go: perhaps your local registry or Dockerhub with a secret and configured service account
