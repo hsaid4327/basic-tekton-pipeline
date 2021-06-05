@@ -1,18 +1,28 @@
-FROM registry.access.redhat.com/ubi8:8.0
+FROM   registry.access.redhat.com/ubi8/ubi:8.0
 
-RUN yum install -y --disableplugin=subscription-manager --nodocs nginx \
-  && yum clean all
+MAINTAINER   Red Hat Training <training@redhat.com>
 
-ADD index.html /usr/share/nginx/html
+# command line options to pass to the JVM
+ENV	  JAVA_OPTIONS -Xmx512m
 
-ADD nginxconf.sed /tmp/
-RUN sed -i -f /tmp/nginxconf.sed /etc/nginx/nginx.conf
 
-RUN touch /run/nginx.pid \
-  && chgrp -R 0 /var/log/nginx /run/nginx.pid \
-  && chmod -R g+rwx /var/log/nginx /run/nginx.pid
+# Install the Java runtime, create a user for running the app, and set permissions
+RUN   yum install -y --disableplugin=subscription-manager java-1.8.0-openjdk-headless && \
+      yum clean all --disableplugin=subscription-manager -y && \
+      useradd wildfly && \
+      mkdir -p /opt/app-root/bin
+
+# Copy the runnable fat JAR to the container.
+ADD   hello-thorntail.jar /opt/app-root/bin/
+
+COPY  run-app.sh /opt/app-root/bin/
+
+RUN   chown -R wildfly:wildfly /opt/app-root && \
+      chmod -R 700 /opt/app-root
 
 EXPOSE 8080
-USER 1001
 
-CMD nginx -g "daemon off;"
+USER  wildfly
+
+# Run the fat JAR
+CMD   /opt/app-root/bin/run-app.sh
